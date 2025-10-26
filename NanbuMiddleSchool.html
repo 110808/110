@@ -144,7 +144,6 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* 可拉动隐藏的导航栏样式 */
         .footer-nav {
             position: fixed;
             bottom: 0;
@@ -327,4 +326,138 @@
                 <div class="form-group">
                     <label for="login-password">密码</label>
                     <input type="password" id="login-password" required>
-                <
+                </div>
+                <button type="submit" class="auth-btn">注册</button>
+                <div class="auth-switch" id="to-login">已有账号？去登录</div>
+             </form>
+         </div>
+     </div>
+     <script>
+         // 导航栏拉动隐藏逻辑
+         let startY = 0;
+         const footerNav = document.getElementById('footer-nav');
+         document.addEventListener('touchstart', (e) => {
+             startY = e.touches[0].clientY;
+         });
+         document.addEventListener('touchmove', (e) => {
+             const moveY = e.touches[0].clientY;
+             const diff = moveY - startY;
+             if (diff > 50) { 
+                 footerNav.classList.add('hide');
+             } else if (diff < -50) { 
+                 footerNav.classList.remove('hide');
+             }
+             startY = moveY;
+         });
+         // 注册登录模态框切换
+         const loginBtn = document.getElementById('login-btn');
+         const loginModal = document.getElementById('login-modal');
+         const registerModal = document.getElementById('register-modal');
+         const closeModal = document.getElementById('close-modal');
+         const closeRegisterModal = document.getElementById('close-register-modal');
+         const toRegister = document.getElementById('to-register');
+         const toLogin = document.getElementById('to-login');
+         loginBtn.addEventListener('click', () => loginModal.classList.add('show'));
+         closeModal.addEventListener('click', () => loginModal.classList.remove('show'));
+         closeRegisterModal.addEventListener('click', () => registerModal.classList.remove('show'));
+         toRegister.addEventListener('click', () => {
+             loginModal.classList.remove('show');
+             registerModal.classList.add('show');
+         });
+         toLogin.addEventListener('click', () => {
+             registerModal.classList.remove('show');
+             loginModal.classList.add('show');
+         });
+         // 表白发布功能
+         const publishBtn = document.getElementById('publish-btn');
+         const confessionInput = document.getElementById('confession-input');
+         const confessionList = document.getElementById('confession-list');
+         publishBtn.addEventListener('click', () => {
+             const content = confessionInput.value.trim();
+             if (!content) return alert('请输入表白内容~');
+             
+             const now = new Date();
+             const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+             
+             const newConfession = document.createElement('div');
+             newConfession.className = 'confession-item';
+             newConfession.innerHTML = `
+                 <div class="confession-author">匿名同学</div>
+                 <div class="confession-content">${content}</div>
+                 <div class="confession-footer">
+                     <span>${timeStr}</span>
+                     <div>
+                         <button class="interact-btn like-btn" data-id="${Date.now()}">
+                             <<i class="iconfont icon-dianzan"></</i> 点赞(0)
+                         </button>
+                         <button class="interact-btn reply-btn" data-id="${Date.now()}">
+                             <<i class="iconfont icon-huifu"></</i> 回复(0)
+                         </button>
+                     </div>
+                 </div>
+                 <div class="reply-section" id="reply-${Date.now()}">
+                     <input type="text" class="reply-input" placeholder="写下你的回复...">
+                     <button class="reply-btn-submit">提交</button>
+                     <div class="reply-list"></div>
+                 </div>
+             `;
+             
+             confessionList.insertBefore(newConfession, confessionList.firstChild);
+             confessionInput.value = '';
+         });
+         // 点赞和回复功能
+         confessionList.addEventListener('click', (e) => {
+             if (e.target.closest('.like-btn')) {
+                 const likeBtn = e.target.closest('.like-btn');
+                 likeBtn.classList.toggle('active');
+                 const text = likeBtn.innerHTML;
+                 const count = parseInt(text.match(/\((\d+)\)/)[1]);
+                 if (likeBtn.classList.contains('active')) {
+                     likeBtn.innerHTML = text.replace(`(${count})`, `(${count+1})`);
+                 } else {
+                     likeBtn.innerHTML = text.replace(`(${count})`, `(${count-1})`);
+                 }
+             }
+             if (e.target.closest('.reply-btn')) {
+                 const replyBtn = e.target.closest('.reply-btn');
+                 const id = replyBtn.dataset.id;
+                 const replySection = document.getElementById(`reply-${id}`);
+                 replySection.classList.toggle('show');
+             }
+             if (e.target.classList.contains('reply-btn-submit')) {
+                 const submitBtn = e.target;
+                 const replyInput = submitBtn.previousElementSibling;
+                 const replyContent = replyInput.value.trim();
+                 if (!replyContent) return alert('请输入回复内容~');
+                 
+                 const replyList = submitBtn.nextElementSibling;
+                 const newReply = document.createElement('div');
+                 newReply.className = 'reply-item';
+                 newReply.textContent = `匿名：${replyContent}`;
+                 replyList.appendChild(newReply);
+                 replyInput.value = '';
+                 const replyBtn = submitBtn.closest('.confession-item').querySelector('.reply-btn');
+                 const text = replyBtn.innerHTML;
+                 const count = parseInt(text.match(/\((\d+)\)/)[1]);
+                 replyBtn.innerHTML = text.replace(`(${count})`, `(${count+1})`);
+             }
+         });
+         // 表单提交逻辑
+         document.getElementById('login-form').addEventListener('submit', (e) => {
+             e.preventDefault();
+             alert('登录成功！');
+             loginModal.classList.remove('show');
+             loginBtn.innerHTML = '<<i class="iconfont icon-yonghu nav-icon"></</i><span>我的</span>';
+         });
+         document.getElementById('register-form').addEventListener('submit', (e) => {
+             e.preventDefault();
+             const pwd = document.getElementById('register-password').value;
+             const confirmPwd = document.getElementById('register-confirm').value;
+             if (pwd !== confirmPwd) return alert('两次密码不一致~');
+             alert('注册成功！');
+             registerModal.classList.remove('show');
+             loginModal.classList.add('show');
+         });
+     </script>
+ </body>
+</html>
